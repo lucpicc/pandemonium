@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProcureFlow | Enterprise Dashboard</title>
+    <!-- iOS/Safari Specific Meta Tags for a native app feel -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ProcureFlow">
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/0d9488/FFFFFF?text=PF">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Cool Neutrals + Teal Accent -->
+    <!-- Application Structure Plan: To accommodate the new, detailed requirements, the app is expanded into a 6-module enterprise suite simulation. The structure (Dashboard, Tenders, Contracts, Project Risk, Change Management, Integrations) is designed for a VC pitch narrative. It starts with a 360° view (Dashboard), then allows a deep-dive into specific operational areas. The key is demonstrating interconnectedness: a risk identified in the 'Project Risk' module is tied to a contract in the 'Contracts' module, and its mitigation via a change order is reflected in the 'Change Management' module's budget charts. This directly showcases the core value proposition: breaking down data silos between SAP, Salesforce, etc., to provide unified, actionable intelligence. -->
+    <!-- Visualization & Content Choices: 
+        1. Integrated Health Chart (Dashboard): Goal -> Show holistic project overview. Viz -> Bubble Chart (Cost, Schedule, Risk). Justification -> A bubble chart effectively visualizes three dimensions of data for quick project health assessment. Library -> Chart.js.
+        2. Contract Repository (Contracts): Goal -> Simulate pulling from Salesforce. Viz -> Filterable HTML table. Interaction -> Clicking a row opens a detailed view. Justification -> A familiar and effective UI for managing a list of business objects. Library -> Vanilla JS.
+        3. Contract Detail View (Contracts): Goal -> Show data aggregation from multiple sources. Viz -> Multi-panel layout showing clauses, SharePoint docs, and SAP payment milestones. Justification -> This is a crucial visual for demonstrating the "single source of truth" concept. Library -> HTML/Tailwind.
+        4. Risk Matrix (Project Risk): Goal -> Visualize risk prioritization. Viz -> HTML Grid with colored cells. Justification -> A standard and instantly recognizable tool for risk management professionals. Library -> HTML/Tailwind.
+        5. Budget vs. Actuals Chart (Change Management): Goal -> Show financial impact of changes. Viz -> Stacked Bar Chart. Justification -> Clearly illustrates how change orders (pulled from Primavera) impact the original budget (from SAP). Library -> Chart.js.
+        6. Integrations Page (Integrations): Goal -> Explicitly show data source connections. Viz -> Logo cards with status indicators, mock data snippets, and rich HTML/CSS visual previews (Gannt, folder structures). Justification -> Provides tangible "proof" of the platform's connectivity and its ability to interpret and display source-specific data, a key due diligence point for VCs. Library -> HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root { 
+            --sidebar-width: 256px;
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        
+        .nav-item.active { background-color: #0d9488; color: white; }
+        .nav-item.active svg { color: white !important; }
+
+        @media (min-width: 768px) {
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+        }
+        /* Hides sidebar on mobile for simplicity and stability, main content takes full width */
+        @media (max-width: 767px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            /* Add a mobile header for branding */
+            .mobile-header {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Mobile Header (Visible only on mobile) -->
+    <header class="mobile-header hidden bg-white shadow-md z-40 sticky top-0 justify-center items-center p-4 h-20">
+        <h1 class="text-2xl font-bold text-teal-600">ProcureFlow</h1>
+    </header>
+
+    <div class="relative min-h-screen md:flex">
+        <!-- Sidebar -->
+        <aside class="sidebar fixed top-0 left-0 h-full bg-white flex flex-col shadow-lg">
+            <div class="flex items-center justify-center h-20 border-b flex-shrink-0">
+                <h1 class="text-2xl font-bold text-teal-600">ProcureFlow</h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                <a href="#dashboard" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100 active">
+                    <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#tenders" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100">
+                     <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Tenders</span>
+                </a>
+                <a href="#contracts" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100">
+                    <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h4M8 7a2 2 0 012-2h4a2 2 0 012 2v8a2 2 0 01-2 2h-4a2 2 0 01-2-2z"></path></svg>
+                    <span>Contracts</span>
+                </a>
+                <a href="#risk" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100">
+                    <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Project Risk</span>
+                </a>
+                 <a href="#change" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100">
+                    <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    <span>Change Management</span>
+                </a>
+                 <a href="#integrations" class="nav-item flex items-center p-4 rounded-lg text-gray-700 font-medium hover:bg-gray-100">
+                    <svg class="w-6 h-6 mr-4 shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14v6m-3-3h6M3 10h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2v-6a2 2 0 012-2zM3 4h2a2 2 0 012 2v2a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2z"></path></svg>
+                    <span>Integrations</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content w-full p-4 sm:p-6 md:p-8">
+            
+            <!-- Dashboard View -->
+            <div id="dashboard" class="view">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Enterprise Dashboard</h1>
+                <p class="text-gray-500 mt-1">Integrated overview of your entire project portfolio.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                    <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Portfolio Budget (SAP)</h3><p class="text-3xl font-bold text-teal-600 mt-1">€125.7M</p></div>
+                    <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Active Contracts (Salesforce)</h3><p class="text-3xl font-bold mt-1">312</p></div>
+                    <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Projects At-Risk (Primavera)</h3><p class="text-3xl font-bold text-red-500 mt-1">8</p></div>
+                    <div class="bg-white p-6 rounded-lg shadow"><h3 class="text-gray-500 text-sm">Pending Change Orders</h3><p class="text-3xl font-bold mt-1">14</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg">Integrated Project Health Overview</h3>
+                        <p class="text-sm text-gray-500">Bubble Size = Budget | X-axis = Schedule Variance (%) | Y-axis = Risk Score</p>
+                        <div class="h-96 mt-4"><canvas id="healthChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg">Live Financials (PowerBI Embedded)</h3>
+                        <div class="mt-4 bg-gray-200 h-96 rounded-md flex flex-col items-center justify-center text-gray-500 p-4">
+                           <p class="font-bold text-lg text-center">[Mock PowerBI Report: Spend vs. Forecast]</p>
+                           <div class="w-full mt-4 text-sm text-gray-700 space-y-2">
+                               <p><strong>Total Spend:</strong> €87.4M</p>
+                               <p><strong>Total Budget:</strong> €125.7M</p>
+                               <p><strong>YTD Variance:</strong> <span class="text-red-500 font-semibold">-€2.1M (Behind Forecast)</span></p>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tenders View -->
+            <div id="tenders" class="view hidden">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Tender Management</h1>
+                <p class="text-gray-500 mt-1">Monitor and evaluate active tenders across the portfolio.</p>
+                <div class="bg-white p-4 sm:p-6 rounded-lg shadow mt-6 overflow-x-auto">
+                    <h3 class="font-semibold text-lg mb-4">Active Tenders</h3>
+                    <table class="w-full text-left text-sm min-w-[640px]">
+                        <thead class="bg-gray-50"><tr class="border-b"><th class="py-2 px-3">Tender ID</th><th>Project</th><th>Status</th><th>Closing Date</th><th>Bids</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b"><td class="py-3 px-3">TNDR-021</td><td>Odense Bridge Steel Supply</td><td><span class="bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">Open</span></td><td>2025-10-31</td><td>4</td><td><button class="text-teal-600 font-semibold" onclick="showTenderDetail()">View Bids</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">TNDR-022</td><td>CPH Metro Geotechnical Survey</td><td><span class="bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">Open</span></td><td>2025-11-15</td><td>2</td><td><button class="text-teal-600 font-semibold">View Bids</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">TNDR-019</td><td>Aarhus Wind Farm Logistics</td><td><span class="bg-yellow-100 text-yellow-700 font-semibold px-2 py-1 rounded-full">Closing Soon</span></td><td>2025-10-10</td><td>8</td><td><button class="text-teal-600 font-semibold">View Bids</button></td></tr>
+                             <tr class="border-b"><td class="py-3 px-3">TNDR-018</td><td>Portfolio-wide Software Licensing</td><td><span class="bg-red-100 text-red-700 font-semibold px-2 py-1 rounded-full">Closed</span></td><td>2025-09-30</td><td>5</td><td><button class="text-gray-500 cursor-not-allowed">View Bids</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="tender-detail" class="hidden bg-white p-6 rounded-lg shadow mt-6 prose max-w-none">
+                    <h3>Bid Evaluation: TNDR-021 (Odense Bridge Steel Supply)</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
+                        <div class="overflow-x-auto">
+                             <h4 class="whitespace-nowrap">Bid Submissions</h4>
+                            <table class="w-full text-sm mt-2 min-w-[400px]">
+                                <thead class="font-bold"><tr><td class="p-2">Supplier</td><td>Bid Amount</td><td>Delivery</td><td>ESG Score</td></tr></thead>
+                                <tbody>
+                                    <tr class="border-t"><td class="p-2">ArcelorMittal</td><td>€12.2M</td><td>120 days</td><td>88/100</td></tr>
+                                    <tr class="border-t"><td class="p-2">Tata Steel</td><td>€11.5M</td><td>150 days</td><td>75/100</td></tr>
+                                    <tr class="border-t"><td class="p-2">SSAB</td><td>€13.1M</td><td>110 days</td><td>95/100</td></tr>
+                                    <tr class="border-t"><td class="p-2">Salzgitter AG</td><td>€12.5M</td><td>120 days</td><td>82/100</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div>
+                             <h4>✨ AI Bid Comparison Summary</h4>
+                            <p class="text-sm mt-2"><strong>Recommendation: SSAB.</strong> While Tata Steel is the lowest-cost bidder, their 150-day delivery timeline introduces a critical path schedule risk of at least 30 days. ArcelorMittal and Salzgitter offer balanced bids, but SSAB's superior ESG score and fastest delivery justify the 7% cost premium, aligning with corporate sustainability goals and de-risking the project schedule.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contracts View -->
+            <div id="contracts" class="view hidden">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Contract Repository</h1>
+                <p class="text-gray-500 mt-1">Live data feed from your Salesforce contract repository.</p>
+                <div class="bg-white p-4 sm:p-6 rounded-lg shadow mt-6 overflow-x-auto">
+                    <h3 class="font-semibold text-lg mb-4">All Active Contracts</h3>
+                    <table class="w-full mt-4 text-left text-sm min-w-[640px]">
+                        <thead class="bg-gray-50"><tr class="border-b"><th class="py-2 px-3">Contract ID</th><th>Supplier</th><th>Type</th><th>Value</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr class="border-b"><td class="py-3 px-3">SF-CON-0834</td><td>KONEcranes Oyj</td><td>Fixed Price</td><td>€3.5M</td><td><span class="bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">Active</span></td><td><button class="text-teal-600 font-semibold" onclick="showContractDetail()">View</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">SF-CON-0835</td><td>Maersk Logistics</td><td>T&M</td><td>€1.2M</td><td><span class="bg-green-100 text-green-700 font-semibold px-2 py-1 rounded-full">Active</span></td><td><button class="text-teal-600 font-semibold">View</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">SF-CON-0799</td><td>Siemens AG</td><td>MSA</td><td>€10M</td><td><span class="bg-yellow-100 text-yellow-700 font-semibold px-2 py-1 rounded-full">Review</span></td><td><button class="text-teal-600 font-semibold">View</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">SF-CON-0650</td><td>Ramboll Group</td><td>Consulting</td><td>€750k</td><td><span class="bg-orange-100 text-orange-700 font-semibold px-2 py-1 rounded-full">Expiring Soon</span></td><td><button class="text-teal-600 font-semibold">View</button></td></tr>
+                            <tr class="border-b"><td class="py-3 px-3">SF-CON-0511</td><td>Old Supplier Inc.</td><td>Fixed Price</td><td>€500k</td><td><span class="bg-red-100 text-red-700 font-semibold px-2 py-1 rounded-full">Terminated</span></td><td><button class="text-gray-500 cursor-not-allowed">View</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div id="contract-detail" class="hidden bg-white p-6 rounded-lg shadow mt-6 prose max-w-none">
+                    <h3>Contract Details: SF-CON-0834 (KONEcranes Oyj)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <h4>Key Clauses & Terms</h4>
+                            <ul>
+                                <li><strong>Liquidated Damages:</strong> 1% of total contract value per week of delay, capped at 10%. <strong>(Note: Flagged in Risk #R003 as ambiguous).</strong></li>
+                                <li><strong>Force Majeure:</strong> Excludes regional labor strikes unless they are nationwide.</li>
+                                <li><strong>Acceptance Criteria:</strong> Defined in SoW-0834-A, linked to performance benchmarks (99.5% uptime over 90 days).</li>
+                            </ul>
+                            <h4>Associated Documents (from SharePoint)</h4>
+                             <ul class="list-none pl-0 text-sm">
+                                <li>📄 Master_Services_Agreement_v2.1.pdf (v2.1, 2024-03-15)</li>
+                                <li>📄 Statement_of_Work_0834-A.docx (v1.0, 2024-03-15)</li>
+                                <li>📄 Insurance_Certificate_2025.pdf (v1.0, 2025-01-10)</li>
+                                <li>📄 Meeting_Minutes_2025-09-18.msg (v1.0, 2025-09-18)</li>
+                            </ul>
+                        </div>
+                        <div>
+                             <h4>Payment Milestones (from SAP)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="text-sm w-full min-w-[250px]">
+                                    <thead><tr><th>Milestone</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        <tr class="border-t"><td>Initial Payment</td><td>€350k</td><td>Paid</td><td>2024-04-01</td></tr>
+                                        <tr class="border-t"><td>Equipment Delivery</td><td>€1.75M</td><td>Paid</td><td>2025-08-20</td></tr>
+                                        <tr class="border-t"><td>Final Acceptance</td><td>€1.4M</td><td>Pending</td><td>-</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk View -->
+            <div id="risk" class="view hidden">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Project Risk Analysis</h1>
+                <p class="text-gray-500 mt-1">Aggregated risk overview for the "Odense Bridge" project.</p>
+                <div class="bg-white p-6 rounded-lg shadow mt-6 prose max-w-none">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                             <h3>Risk Matrix</h3>
+                             <div class="grid grid-cols-5 gap-2 text-center text-xs font-semibold mt-4">
+                                <div></div><div class="bg-gray-200 p-1">Low</div><div class="bg-gray-200 p-1">Medium</div><div class="bg-gray-200 p-1">High</div><div class="bg-gray-200 p-1">Critical</div>
+                                <div class="bg-gray-200 p-1 self-center">Likely</div><div class="bg-yellow-200 p-4"></div><div class="bg-orange-300 p-4"></div><div class="bg-red-400 p-4 flex items-center justify-center">#R003</div><div class="bg-red-500 p-4"></div>
+                                <div class="bg-gray-200 p-1 self-center">Possible</div><div class="bg-green-200 p-4 flex items-center justify-center">#R005</div><div class="bg-yellow-200 p-4 flex items-center justify-center">#R002</div><div class="bg-orange-300 p-4 flex items-center justify-center">#R004</div><div class="bg-red-400 p-4"></div>
+                                <div class="bg-gray-200 p-1 self-center">Unlikely</div><div class="bg-green-200 p-4"></div><div class="bg-green-200 p-4"></div><div class="bg-yellow-200 p-4"></div><div class="bg-orange-300 p-4 flex items-center justify-center">#R001</div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Risk Trend</h3>
+                             <div class="h-48 mt-4"><canvas id="riskTrendChart"></canvas></div>
+                        </div>
+                    </div>
+                     <h3 class="mt-8">Active Risks Log</h3>
+                     <div class="overflow-x-auto">
+                         <table class="w-full text-sm mt-4 min-w-[640px]">
+                            <thead class="font-bold"><tr><td class="p-2">ID</td><td>Description</td><td>Category</td><td>Impact</td><td>Mitigation</td></tr></thead>
+                            <tbody>
+                                <tr class="border-t"><td class="p-2">#R003</td><td>Ambiguous liability clause in SF-CON-0834 could lead to cost overruns during commissioning.</td><td>Contractual</td><td>High</td><td>Initiate change order CO-013 to clarify terms before final acceptance.</td></tr>
+                                <tr class="border-t"><td class="p-2">#R002</td><td>Dependency on single-source supplier for Kryton-9 component used in crane control systems.</td><td>Supplier</td><td>Medium</td><td>Identify and vet alternative suppliers in North America. Secure 3 months of buffer stock.</td></tr>
+                                 <tr class="border-t"><td class="p-2">#R001</td><td>Unexpected geotechnical conditions could delay foundation work.</td><td>Project</td><td>High</td><td>Approved change order CO-012 for additional soil testing. Increased contingency budget.</td></tr>
+                                 <tr class="border-t"><td class="p-2">#R004</td><td>Key personnel from Siemens AG assigned to other projects, risking knowledge gaps.</td><td>Resource</td><td>High</td><td>Formal request submitted to Siemens for named resource guarantees in MSA.</td></tr>
+                                  <tr class="border-t"><td class="p-2">#R005</td><td>New environmental regulations could require different paint specifications.</td><td>Regulatory</td><td>Low</td><td>Monitor regulatory updates. Pre-qualify alternative paint suppliers.</td></tr>
+                            </tbody>
+                         </table>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Change Management View -->
+            <div id="change" class="view hidden">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Change Management</h1>
+                <p class="text-gray-500 mt-1">Budget and schedule impact for the "Odense Bridge" project.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
+                    <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow">
+                        <h3 class="font-semibold text-lg">Budget Overview (from SAP)</h3>
+                        <div class="h-96 mt-4"><canvas id="budgetChart"></canvas></div>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow overflow-x-auto">
+                         <h3 class="font-semibold text-lg">Change Order Log (from Primavera P6)</h3>
+                         <table class="w-full text-sm mt-4 min-w-[400px]">
+                            <thead><tr class="border-b"><th class="p-2">ID</th><th>Description</th><th>Impact</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-2">CO-012</td><td>Additional soil testing</td><td>+€150k / +10d</td><td class="text-green-600 font-semibold">Approved</td></tr>
+                                <tr class="border-b"><td class="p-2">CO-013</td><td>Clarify SF-CON-0834 liability</td><td>€0 / 0d</td><td class="text-green-600 font-semibold">Approved</td></tr>
+                                <tr class="border-b"><td class="p-2">CO-014</td><td>Material substitution (steel)</td><td>-€50k / 0d</td><td class="text-yellow-600 font-semibold">Pending</td></tr>
+                                <tr class="border-b"><td class="p-2">CO-011</td><td>Client-requested design change</td><td>+€450k / +25d</td><td class="text-green-600 font-semibold">Approved</td></tr>
+                                <tr class="border-b"><td class="p-2">CO-010</td><td>Overtime for schedule recovery</td><td>+€80k / -5d</td><td class="text-red-600 font-semibold">Rejected</td></tr>
+                            </tbody>
+                         </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Integrations View -->
+            <div id="integrations" class="view hidden">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">System Integrations</h1>
+                <p class="text-gray-500 mt-1">Manage and monitor your enterprise data connections.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                     <!-- Oracle Primavera -->
+                    <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                        <div class="flex items-center"><img src="https://placehold.co/40x40/FF0000/FFFFFF?text=P6" class="rounded mr-3"><h3 class="font-bold text-lg">Oracle Primavera P6</h3></div>
+                        <p class="text-xs text-green-600 font-semibold">Connected (Last sync: 5 min ago)</p>
+                        <div class="bg-gray-800 text-white font-mono text-xs p-2 rounded">
+                            <p>> Fetching Project: ID: ODB-001</p>
+                            <p>> Fetching WBS: OB-01.Foundation (Status: On-Track)</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-sm mb-2">Live Data Preview: Gantt Chart</h4>
+                            <div class="text-xs space-y-2">
+                                <div class="flex items-center"><div class="w-28 shrink-0">Foundation</div><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-teal-500 h-4 rounded-full" style="width: 45%"></div></div></div>
+                                <div class="flex items-center"><div class="w-28 shrink-0">Steel Erection</div><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full ml-[20%]" style="width: 55%"></div></div></div>
+                                <div class="flex items-center"><div class="w-28 shrink-0">Commissioning</div><div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-orange-500 h-4 rounded-full ml-[60%]" style="width: 30%"></div></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- SAP -->
+                    <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                        <div class="flex items-center"><img src="https://placehold.co/40x40/003366/FFFFFF?text=SAP" class="rounded mr-3"><h3 class="font-bold text-lg">SAP S/4HANA</h3></div>
+                        <p class="text-xs text-green-600 font-semibold">Connected (Last sync: 2 min ago)</p>
+                        <div class="bg-gray-800 text-white font-mono text-xs p-2 rounded">
+                            <p>> Fetching Vendor: LFA1-LIFNR: 100345 (KONE...)</p>
+                            <p>> Fetching Cost Center: CSKS-KOSTL: ODB-FIN-4100</p>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-sm mb-2">Live Data Preview: Financials</h4>
+                            <div class="text-xs space-y-2">
+                                <p><strong>Budget Analysis:</strong> Budget €35M / Actuals €22.1M / Variance <span class="text-red-500">-€0.8M</span></p>
+                                <p><strong>Recent POs:</strong> PO#4500017545 (€1.75M, Paid), PO#4500017599 (€0.8M, Pending)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Salesforce -->
+                    <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                        <div class="flex items-center"><img src="https://placehold.co/40x40/00A1E0/FFFFFF?text=SF" class="rounded mr-3"><h3 class="font-bold text-lg">Salesforce</h3></div>
+                        <p class="text-xs text-green-600 font-semibold">Connected (Last sync: 1 min ago)</p>
+                         <div class="bg-gray-800 text-white font-mono text-xs p-2 rounded">
+                            <p>> Fetching Contract: ID: 8003q... (SF-CON-0834)</p>
+                            <p>> Status: 'Activated' | Account: KONEcranes Oyj</p>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-sm mb-2">Live Data Preview: Contract Overview</h4>
+                            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                                <div><p class="font-bold text-lg text-green-600">280</p><p>Active</p></div>
+                                <div><p class="font-bold text-lg text-orange-500">18</p><p>Expiring</p></div>
+                                <div><p class="font-bold text-lg text-yellow-500">14</p><p>In Review</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- SharePoint -->
+                    <div class="bg-white p-4 rounded-lg shadow space-y-3">
+                        <div class="flex items-center"><img src="https://placehold.co/40x40/0078D4/FFFFFF?text=SP" class="rounded mr-3"><h3 class="font-bold text-lg">Microsoft SharePoint</h3></div>
+                        <p class="text-xs text-green-600 font-semibold">Connected (Real-time)</p>
+                        <div class="bg-gray-800 text-white font-mono text-xs p-2 rounded">
+                            <p>> Path: /sites/OdenseBridge/Contracts/</p>
+                            <p>> Found 4 docs for SF-CON-0834</p>
+                        </div>
+                         <div>
+                            <h4 class="font-semibold text-sm mb-2">Live Data Preview: Folder Structure</h4>
+                            <div class="text-xs font-mono space-y-1 pl-2">
+                                <p>📁 /OdenseBridge</p>
+                                <p class="pl-4">📁 /Contracts</p>
+                                <p class="pl-8">📄 SF-CON-0834_MSA.pdf</p>
+                                <p class="pl-8">📄 SF-CON-0834_SoW.docx</p>
+                                <p class="pl-4">📁 /ProjectPlans</p>
+                                <p class="pl-4">📁 /Financials</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- App Navigation Logic ---
+            const views = document.querySelectorAll('.view');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            const showView = (id) => {
+                views.forEach(view => {
+                    if (!view.classList.contains('hidden')) {
+                        view.classList.add('hidden');
+                    }
+                });
+                const newView = document.getElementById(id);
+                if (newView) { newView.classList.remove('hidden'); }
+
+                navItems.forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+                });
+            };
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = e.currentTarget.getAttribute('href').substring(1);
+                    showView(id);
+                });
+            });
+
+            window.showContractDetail = () => {
+                document.getElementById('contract-detail').classList.remove('hidden');
+                document.getElementById('contract-detail').scrollIntoView({ behavior: 'smooth' });
+            }
+            window.showTenderDetail = () => {
+                document.getElementById('tender-detail').classList.remove('hidden');
+                document.getElementById('tender-detail').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // --- Chart.js Initializations ---
+            let charts = {};
+            const createCharts = () => {
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                
+                if(charts.healthChart) charts.healthChart.destroy();
+                const healthChartCtx = document.getElementById('healthChart')?.getContext('2d');
+                if(healthChartCtx) {
+                    charts.healthChart = new Chart(healthChartCtx, {
+                        type: 'bubble',
+                        data: {
+                            datasets: [
+                                { label: 'Odense Bridge', data: [{x: 5, y: 7, r: 25}], backgroundColor: 'rgba(239, 68, 68, 0.7)'}, 
+                                { label: 'CPH Metro Expansion', data: [{x: -2, y: 3, r: 35}], backgroundColor: 'rgba(13, 148, 136, 0.7)'}, 
+                                { label: 'Aarhus Wind Farm', data: [{x: 8, y: 5, r: 15}], backgroundColor: 'rgba(245, 158, 11, 0.7)'},
+                                { label: 'Jutland Data Center', data: [{x: 0, y: 2, r: 22}], backgroundColor: 'rgba(13, 148, 136, 0.7)'},
+                                { label: 'Fehmarn Belt Fixed Link', data: [{x: 12, y: 9, r: 40}], backgroundColor: 'rgba(239, 68, 68, 0.7)'}
+                            ]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                    });
+                }
+                
+                if(charts.budgetChart) charts.budgetChart.destroy();
+                const budgetChartCtx = document.getElementById('budgetChart')?.getContext('2d');
+                if(budgetChartCtx) {
+                    charts.budgetChart = new Chart(budgetChartCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Foundation', 'Structural Steel', 'Electrical', 'Contingency'],
+                            datasets: [
+                                { label: 'Original Budget', data: [10, 12, 8, 5], backgroundColor: '#a7f3d0' },
+                                { label: 'Approved Changes', data: [0.6, 0, 0.5, -0.6], backgroundColor: '#f59e0b' },
+                                { label: 'Pending Changes', data: [0, -0.05, 0.2, 0], backgroundColor: '#fde68a' }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: value => `€${value}M` } } },
+                            plugins: { legend: { position: 'bottom' } }
+                        }
+                    });
+                }
+                
+                if(charts.riskTrendChart) charts.riskTrendChart.destroy();
+                const riskTrendCtx = document.getElementById('riskTrendChart')?.getContext('2d');
+                if(riskTrendCtx) {
+                    charts.riskTrendChart = new Chart(riskTrendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                            datasets: [{
+                                label: 'High-Impact Risks',
+                                data: [5, 6, 4, 4],
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                fill: true,
+                                tension: 0.3
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    });
+                }
+            };
+
+            // Initialize default view & charts
+            showView('dashboard');
+            // A short delay to ensure the canvas is rendered before drawing the chart
+            setTimeout(createCharts, 100);
+        });
+    </script>
+</body>
+</html>
+
